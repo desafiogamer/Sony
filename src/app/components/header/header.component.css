@@ -4,7 +4,7 @@ header{
   left: 0;
   width: 100%;
   background: transparent;
-  backdrop-filter: blur(30px);
+  backdrop-filter: blur(20px);
   display: flex;
   justify-content: space-between;
   align-items: center;
