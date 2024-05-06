@@ -22,7 +22,9 @@ import { Modelo3DComponent } from './components/modelo-3-d/modelo-3-d.component'
     <app-card-shop/>
 
     <!--modelo 3D-->
-    <app-modelo-3-d/>
+    @defer(){
+      <!--<app-modelo-3-d/>-->
+    }
 
     <!--Rotas-->
     <router-outlet/>
