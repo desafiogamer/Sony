@@ -1,0 +1,73 @@
+.stripes{
+  position: absolute;
+  display: flex;
+  justify-content: space-between;
+  right: 150px;
+  width: 50px;
+  height: 100vh;
+}
+
+.line-one {
+  width: 15px;
+  height: 100%;
+  background: #ff3131;
+  z-index: 1;
+  animation: entrada .5s linear;
+}
+
+.line-two {
+  width: 25px;
+  height: 100%;
+  background: #183d79;
+  z-index: 1;
+  animation: entrada 1s linear;
+}
+
+.img{
+  position: absolute;
+  bottom: -10px;
+  right: 0;
+  z-index: 2;
+}
+
+.img img{
+  display: none;
+}
+
+.img img.ativo{
+  display: block;
+  animation: efect 2s infinite linear, efeito .5s ease;
+}
+
+
+@keyframes efeito{
+  0%{
+      opacity: 0;
+      transform: translateY(800px);
+  }
+
+  100%{
+      opacity: 1;
+      transform: translateY(0);
+  }
+}
+
+@keyframes efect {
+  0% {
+      transform: scale(1);
+  }
+
+  50% {
+      transform: scale(1.015);
+  }
+
+  100% {
+      transform: scale(1);
+  }
+}
+
+@keyframes entrada{
+  0%{
+    height: 0;
+  }
+}

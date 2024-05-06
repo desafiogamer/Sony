@@ -4,6 +4,7 @@ import { Component } from '@angular/core';
 import { Modelo3DComponent } from '../../components/modelo-3-d/modelo-3-d.component';
 import { HeaderComponent } from '../../components/header/header.component';
 import { CardShopComponent } from '../../components/card-shop/card-shop.component';
+import { HomeComponent } from '../../sections/home/home.component';
 
 @Component({
   selector: 'app-inicio',
@@ -11,7 +12,8 @@ import { CardShopComponent } from '../../components/card-shop/card-shop.componen
   imports: [
     Modelo3DComponent,
     HeaderComponent,
-    CardShopComponent
+    CardShopComponent,
+    HomeComponent
   ],
   templateUrl: './inicio.component.html',
   styleUrl: './inicio.component.css'

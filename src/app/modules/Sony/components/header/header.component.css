@@ -9,6 +9,7 @@ header{
   justify-content: space-between;
   align-items: center;
   padding: 20px 40px;
+  z-index: 999;
 }
 
 header nav a{
