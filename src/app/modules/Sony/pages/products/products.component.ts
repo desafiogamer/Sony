@@ -5,16 +5,16 @@ import { LinhasComponent } from '../../components/linhas/linhas.component';
 import { ContainerImgsComponent } from '../../components/container-imgs/container-imgs.component';
 
 @Component({
-  selector: 'app-inicio',
+  selector: 'app-products',
   standalone: true,
   imports: [
     LinhasComponent,
     ContainerImgsComponent
   ],
-  templateUrl: './inicio.component.html',
-  styleUrl: './inicio.component.css'
+  templateUrl: './products.component.html',
+  styleUrl: './products.component.css'
 })
-export class InicioComponent {
-  public src:string = 'assets/img/godofwar.webp'
-  public alt:string = 'God of War'
+export class ProductsComponent {
+  public src:string = 'assets/img/spider2.webp'
+  public alt:string = 'Homem Aranhas'
 }

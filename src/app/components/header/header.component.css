@@ -8,8 +8,8 @@ header{
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px 40px;
-  z-index: 999;
+  padding: 20px 100px 20px 40px;
+  z-index: 99;
 }
 
 header nav a{

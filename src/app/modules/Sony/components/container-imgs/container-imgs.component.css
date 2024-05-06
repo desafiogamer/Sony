@@ -1,0 +1,36 @@
+.img{
+  position: absolute;
+  bottom: -10px;
+  right: 0;
+  z-index: 2;
+}
+
+.img img{
+  animation: efect 2s infinite linear, efeito .5s ease;
+}
+
+@keyframes efeito{
+  0%{
+      opacity: 0;
+      transform: translateY(800px);
+  }
+
+  100%{
+      opacity: 1;
+      transform: translateY(0);
+  }
+}
+
+@keyframes efect {
+  0% {
+      transform: scale(1);
+  }
+
+  50% {
+      transform: scale(1.015);
+  }
+
+  100% {
+      transform: scale(1);
+  }
+}
