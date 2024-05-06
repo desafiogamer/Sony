@@ -1,0 +1,24 @@
+/* You can add global styles to this file, and also import other style files */
+*{
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
+  font-family: 'Noto Sans Tifinagh', sans-serif;
+}
+
+::-webkit-scrollbar {
+  display: none;
+}
+
+canvas {
+  position: fixed;
+  top: 0;
+  width: 100%;
+  height: 100vh;
+  z-index: -1;
+}
+
+body{
+  overflow: hidden;
+  background: #11111f;
+}
