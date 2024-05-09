@@ -23,7 +23,7 @@ import { Modelo3DComponent } from './components/modelo-3-d/modelo-3-d.component'
 
     <!--modelo 3D-->
     @defer(){
-      <!--<app-modelo-3-d/>-->
+      <app-modelo-3-d/>
     }
 
     <!--Rotas-->

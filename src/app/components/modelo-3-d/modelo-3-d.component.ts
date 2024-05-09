@@ -21,7 +21,7 @@ export class Modelo3DComponent implements AfterViewInit {
     let flash: THREE.PointLight;
     let cloudParticles: THREE.Mesh[] = [];
 
-    const rainCount: number = 12000;
+    const rainCount: number = 6000;
 
     function init() {
       scene = new THREE.Scene();
@@ -30,7 +30,7 @@ export class Modelo3DComponent implements AfterViewInit {
       camera.position.set(0, 0, 1);
       camera.rotation.set(1.16, -0.12, 0.27);
 
-      const directionalLight = new THREE.DirectionalLight(0xffeedd);
+      const directionalLight:THREE.DirectionalLight = new THREE.DirectionalLight(0xffeedd);
       directionalLight.position.set(0, 0, 1);
       scene.add(directionalLight);
 
@@ -50,8 +50,8 @@ export class Modelo3DComponent implements AfterViewInit {
     }
 
     function initRain() {
-      const rainDropVertices = new Float32Array(rainCount * 3);
-      const rainDropSizes = new Float32Array(rainCount);
+      const rainDropVertices: Float32Array = new Float32Array(rainCount * 3);
+      const rainDropSizes: Float32Array = new Float32Array(rainCount);
 
       for (let i = 0; i < rainCount; i++) {
         rainDropVertices[i * 3] = Math.random() * 400 - 200;
@@ -60,11 +60,11 @@ export class Modelo3DComponent implements AfterViewInit {
         rainDropSizes[i] = 30;
       }
 
-      const rainGeo = new THREE.BufferGeometry();
+      const rainGeo: THREE.BufferGeometry = new THREE.BufferGeometry();
       rainGeo.setAttribute('position', new THREE.BufferAttribute(rainDropVertices, 3));
       rainGeo.setAttribute('size', new THREE.BufferAttribute(rainDropSizes, 1));
 
-      const rainMaterial = new THREE.PointsMaterial({
+      const rainMaterial: THREE.PointsMaterial = new THREE.PointsMaterial({
         color: 0xaaaaaa,
         size: 0.15,
         transparent: true
@@ -75,15 +75,15 @@ export class Modelo3DComponent implements AfterViewInit {
     }
 
     function initClouds() {
-      const loader = new THREE.TextureLoader();
+      const loader: THREE.TextureLoader = new THREE.TextureLoader();
       loader.load("assets/img/smoke.webp", function (texture) {
-        const cloudGeo = new THREE.PlaneGeometry(500, 500);
+        const cloudGeo = new THREE.PlaneGeometry(400, 400);
         const cloudMaterial = new THREE.MeshLambertMaterial({
           map: texture,
           transparent: true
         });
 
-        for (let p = 0; p < 25; p++) {
+        for (let p = 0; p < 20; p++) {
           const cloud = new THREE.Mesh(cloudGeo, cloudMaterial);
           cloud.position.set(
             Math.random() * 700 - 400,
