@@ -50,24 +50,31 @@ export class Modelo3DComponent implements AfterViewInit {
     }
 
     function initRain() {
-      const rainDropVertices: Float32Array = new Float32Array(rainCount * 3);
-      const rainDropSizes: Float32Array = new Float32Array(rainCount);
+      const RAIN_AREA_X = 100;
+      const RAIN_AREA_Y = 500;
+      const RAIN_AREA_Z = 200;
+      const RAIN_DROP_SIZE = 30;
+      const PARTICLE_SIZE = 0.1;
+      const RAIN_COUNT = 2000;
 
-      for (let i = 0; i < rainCount; i++) {
-        rainDropVertices[i * 3] = Math.random() * 400 - 200;
-        rainDropVertices[i * 3 + 1] = Math.random() * 500 - 250;
-        rainDropVertices[i * 3 + 2] = Math.random() * 400 - 200;
-        rainDropSizes[i] = 30;
+      const rainDropVertices = new Float32Array(RAIN_COUNT * 3);
+      const rainDropSizes = new Float32Array(RAIN_COUNT);
+
+      for (let i = 0; i < RAIN_COUNT; i++) {
+        rainDropVertices[i * 3] = Math.random() * RAIN_AREA_X - RAIN_AREA_X / 2;
+        rainDropVertices[i * 3 + 1] = Math.random() * RAIN_AREA_Y - RAIN_AREA_Y / 2;
+        rainDropVertices[i * 3 + 2] = Math.random() * RAIN_AREA_Z - RAIN_AREA_Z / 2;
+        rainDropSizes[i] = RAIN_DROP_SIZE;
       }
 
-      const rainGeo: THREE.BufferGeometry = new THREE.BufferGeometry();
+      const rainGeo = new THREE.BufferGeometry();
       rainGeo.setAttribute('position', new THREE.BufferAttribute(rainDropVertices, 3));
       rainGeo.setAttribute('size', new THREE.BufferAttribute(rainDropSizes, 1));
 
-      const rainMaterial: THREE.PointsMaterial = new THREE.PointsMaterial({
-        color: 0xaaaaaa,
-        size: 0.15,
-        transparent: true
+      const rainMaterial = new THREE.PointsMaterial({
+        color: 0xffffff,
+        size: PARTICLE_SIZE,
+        transparent: true,
       });
 
       rain = new THREE.Points(rainGeo, rainMaterial);
@@ -94,7 +101,7 @@ export class Modelo3DComponent implements AfterViewInit {
           cloud.material.opacity = 0.1;
           cloudParticles.push(cloud);
           scene.add(cloud);
-        }
+        };
       });
     }
 
