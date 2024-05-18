@@ -1,2 +1,2 @@
 User-agent: *
-Disallow:/joão vitor gentil da silva/
+Disallow:/João vitor gentil da silva/
