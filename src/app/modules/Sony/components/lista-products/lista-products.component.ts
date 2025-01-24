@@ -1,17 +1,17 @@
 import { Component, signal } from '@angular/core';
-
-//interfaces
-import { productInterface } from '../../../../interfaces/products.interface';
+import { productInterface } from '../../interfaces/products.interface';
+import { ProductsComponent } from '../../pages/products/products.component';
 
 @Component({
-  selector: 'app-lista-produtos',
+  selector: 'app-lista-products',
   standalone: true,
-  imports: [],
-  templateUrl: './lista-produtos.component.html',
-  styleUrl: './lista-produtos.component.css'
+  imports: [
+    ProductsComponent
+  ],
+  templateUrl: './lista-products.component.html',
+  styleUrl: './lista-products.component.css'
 })
-export class ListaProdutosComponent {
-
+export class ListaProductsComponent {
   public products = signal<productInterface[]>([
     {
       id: 1,
@@ -19,7 +19,7 @@ export class ListaProdutosComponent {
       lancamento: '22/03/2005',
       category: 'game',
       price: 249,
-      image: './img/spider2.jpg',
+      image: 'assets/img/spider2.jpg',
       quantity: 1,
     },
     {
@@ -28,7 +28,7 @@ export class ListaProdutosComponent {
       lancamento: '22/03/2005',
       category: 'game',
       price: 97,
-      image: 'img/horizon2.jpg',
+      image: 'assets/img/horizon2.jpg',
       quantity: 1,
     },
     {
@@ -37,7 +37,7 @@ export class ListaProdutosComponent {
       lancamento: '22/03/2005',
       category: 'game',
       price: 193,
-      image: 'img/the-last-of-us2.jpg',
+      image: 'assets/img/the-last-of-us2.jpg',
       quantity: 1,
     },
     {
@@ -46,7 +46,7 @@ export class ListaProdutosComponent {
       lancamento: '22/03/2005',
       category: 'game',
       price: 195,
-      image: 'img/ghost-of-tsushima.png',
+      image: 'assets/img/ghost-of-tsushima.png',
       quantity: 1,
     },
     {
@@ -55,7 +55,7 @@ export class ListaProdutosComponent {
       lancamento: '22/03/2005',
       category: 'game',
       price: 99,
-      image: 'img/god-of-war-2018.jpg',
+      image: 'assets/img/god-of-war-2018.jpg',
       quantity: 1,
     },
     {
@@ -64,7 +64,7 @@ export class ListaProdutosComponent {
       lancamento: '22/03/2005',
       category: 'game',
       price: 349,
-      image: 'img/godrag.jpg',
+      image: 'assets/img/godrag.jpg',
       quantity: 1,
     },
     {
@@ -73,7 +73,7 @@ export class ListaProdutosComponent {
       lancamento: '22/03/2005',
       category: 'game',
       price: 94,
-      image: 'img/death-stranding.jpg',
+      image: 'assets/img/death-stranding.jpg',
       quantity: 1,
     },
     {
@@ -82,7 +82,7 @@ export class ListaProdutosComponent {
       lancamento: '22/03/2005',
       category: 'game',
       price: 88,
-      image: 'img/bloodborne.jpg',
+      image: 'assets/img/bloodborne.jpg',
       quantity: 1,
     },
     {
@@ -91,9 +91,8 @@ export class ListaProdutosComponent {
       lancamento: '22/03/2005',
       category: 'game',
       price: 174,
-      image: 'img/uncharted-4.jpg',
+      image: 'assets/img/uncharted-4.jpg',
       quantity: 1,
     },
   ]);
-
 }
