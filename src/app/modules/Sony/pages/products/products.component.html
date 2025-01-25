@@ -1,9 +1,4 @@
 <section id="produtos">
   <app-linhas/>
   <app-container-imgs [src]="src" [alt]="alt"/>
-  @for(produto of produtos(); track produto;){
-      <h3>{{ produto.nome }}</h3>
-      <p>Preço: {{ produto.price }}</p>
-      <p>Descrição: {{ produto.lancamento }}</p>
-  }
 </section>

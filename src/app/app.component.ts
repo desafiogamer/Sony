@@ -3,6 +3,7 @@ import { RouterOutlet } from '@angular/router';
 import { HeaderComponent } from './components/header/header.component';
 import { CardShopComponent } from './components/card-shop/card-shop.component';
 import { Modelo3DComponent } from './components/modelo-3-d/modelo-3-d.component';
+import { CarouselComponent } from './components/carousel/carousel.component';
 
 @Component({
   selector: 'app-root',
@@ -12,6 +13,7 @@ import { Modelo3DComponent } from './components/modelo-3-d/modelo-3-d.component'
     RouterOutlet,
     CardShopComponent,
     Modelo3DComponent,
+    CarouselComponent
   ],
 
   template: `
@@ -25,9 +27,11 @@ import { Modelo3DComponent } from './components/modelo-3-d/modelo-3-d.component'
     @defer(){
       <app-modelo-3-d/>
     }
+    <app-carousel/>
 
     <!--Rotas-->
     <router-outlet/>
+
   `
 })
 export class AppComponent {

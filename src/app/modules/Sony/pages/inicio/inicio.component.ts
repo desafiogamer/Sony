@@ -9,7 +9,7 @@ import { ContainerImgsComponent } from '../../components/container-imgs/containe
   standalone: true,
   imports: [
     LinhasComponent,
-    ContainerImgsComponent
+    ContainerImgsComponent,
   ],
   templateUrl: './inicio.component.html',
   styleUrl: './inicio.component.css'
