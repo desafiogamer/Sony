@@ -54,12 +54,12 @@ export class Modelo3DComponent implements AfterViewInit {
   }
 
   private initRain(): THREE.Group {
-    const RAIN_COUNT = 3000;
+    const RAIN_COUNT = 2000;
     const rainGroup = new THREE.Group();
     const rainMaterial = new THREE.MeshPhongMaterial({
       color: 0xffffff,
       transparent: true,
-      opacity: 0.3,
+      opacity: 0.5,
       shininess: 50,
     });
 

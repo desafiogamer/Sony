@@ -14,17 +14,17 @@ export class CarouselComponent implements OnInit {
   @ViewChild('carouselContainer', { static: true }) carouselContainerRef!: ElementRef;
 
   images = [
-    { url: 'assets/img/spiderinicio.jpg', caption: 'Image 1 Caption', alt: 'Image 1' },
-    { url: 'assets/img/ghost-of-tsushima.jpg', caption: 'Image 2 Caption', alt: 'Image 2' },
-    { url: 'assets/img/forbidden.png', caption: 'Image 3 Caption', alt: 'Image 3' },
-    { url: 'assets/img/the-last-of-us.jpg', caption: 'Image 4 Caption', alt: 'Image 4' },
-    { url: 'assets/img/godrag.jpg', caption: 'Image 5 Caption', alt: 'Image 5' },
-    { url: 'assets/img/death-stranding.png', caption: 'Image 6 Caption', alt: 'Image 6' },
+    { url: 'assets/img/spiderinicio.webp', caption: 'Spider Man 2' },
+    { url: 'assets/img/ghost-of-tsushima.webp', caption: 'Ghost of Tsushima' },
+    { url: 'assets/img/forbidden.webp', caption: 'horizon Forbidden West' },
+    { url: 'assets/img/the-last-of-us.webp', caption: 'The last of Us' },
+    { url: 'assets/img/godrag.webp', caption: 'God of War Ragnarok' },
+    { url: 'assets/img/death-stranding.webp', caption: 'Death Stranding' },
   ];
 
-  radius = 200;
-  width = 150;
-  height = 100;
+  radius = 250;
+  width = 300;
+  height = 200;
   reflectionOpacity = 0.2;
   reflectionHeightPer = 0.4;
 
@@ -47,7 +47,7 @@ export class CarouselComponent implements OnInit {
   private prevmouse = { x: 0, y: 0 };
   private mouse = { x: 0, y: 0 };
 
-  constructor() {}
+  constructor() { }
 
   ngOnInit(): void {
     this.initScene();
@@ -61,15 +61,15 @@ export class CarouselComponent implements OnInit {
     window.addEventListener('resize', this.onWindowResize.bind(this));
 
     // Touch Events
-    window.addEventListener('touchstart', this.onTouchStart.bind(this));
-    window.addEventListener('touchend', this.onTouchEnd.bind(this));
-    window.addEventListener('touchmove', this.onTouchMove.bind(this));
+    document.addEventListener('touchstart', this.onDocumentTouchStart.bind(this));
+    document.addEventListener('touchmove', this.onDocumentTouchMove.bind(this));
+    document.addEventListener('touchend', this.onDocumentTouchEnd.bind(this));
   }
 
   initScene(): void {
     this.scene = new THREE.Scene();
     this.camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 1, 1000);
-    this.camera.position.z = 500;
+    this.camera.position.z = 650;
 
     this.renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
     this.renderer.setSize(window.innerWidth, window.innerHeight);
@@ -77,13 +77,6 @@ export class CarouselComponent implements OnInit {
 
     const container = this.carouselContainerRef.nativeElement;
     container.appendChild(this.renderer.domElement);
-
-    const light = new THREE.AmbientLight(0xffffff, 0.5);
-    this.scene.add(light);
-
-    const pointLight = new THREE.PointLight(0xffffff, 1);
-    pointLight.position.set(50, 50, 50);
-    this.scene.add(pointLight);
 
     this.angleStep = (2 * Math.PI) / this.images.length;
   }
@@ -96,54 +89,67 @@ export class CarouselComponent implements OnInit {
 
   loadImages(): void {
     const textureLoader = new THREE.TextureLoader();
-    const loader = new FontLoader();
-  
+    const fontLoader = new FontLoader(); // Carregador de fontes definido aqui
+
     this.images.forEach((image, index) => {
       textureLoader.load(
         image.url,
         (texture) => {
+          texture.generateMipmaps = true;
           texture.minFilter = THREE.LinearFilter;
           texture.magFilter = THREE.LinearFilter;
+          texture.anisotropy = this.renderer.capabilities.getMaxAnisotropy();
+
+          texture.needsUpdate = true;
+
+          const material = new THREE.ShaderMaterial({
+            uniforms: {
+              map: { value: texture },
+              saturation: { value: 1 }, // Ajuste o valor da saturação aqui
+            },
+            vertexShader: `
+              varying vec2 vUv;
+              void main() {
+                vUv = uv;
+                gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.3);
+              }
+            `,
+            fragmentShader: `
+              uniform sampler2D map;
+              uniform float saturation;
+              varying vec2 vUv;
   
-          const material = new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide });
+              void main() {
+                vec4 color = texture2D(map, vUv);
+                float avg = (color.r + color.g + color.b) / 3.0;
+                vec3 saturated = mix(vec3(avg), color.rgb, saturation);
+                gl_FragColor = vec4(saturated, color.a);
+              }
+            `,
+            side: THREE.DoubleSide,
+          });
+
+          // Criando o plano de imagem
           const plane = new THREE.Mesh(new THREE.PlaneGeometry(this.width, this.height, 3, 3), material);
-          
           const angle = index * this.angleStep;
           plane.rotation.y = -angle - Math.PI / 2;
           plane.position.set(this.radius * Math.cos(angle), 0, this.radius * Math.sin(angle));
           plane.scale.x = -1;
-  
+
           this.scene.add(plane);
-  
-          loader.load('assets/fonts/helvetiker_regular.typeface.js', (font) => {
-            let size = 0.6 * (this.width / image.caption.length);
-            let height = 2;
-  
-            const text3d = new TextGeometry(image.caption, {
-              size: size,
-              height: height,
-              curveSegments: 2,
-              font: font,
-            });
-  
-            const textMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
-            const text = new THREE.Mesh(text3d, textMaterial);
-  
-            const textContainer = new THREE.Object3D();
-            textContainer.add(text);
-  
-            text.position.x = 0;
-            text.position.y = plane.position.y - size - 0.5 * this.height - 5;
-            text.position.z = plane.position.z + 2;
-  
-            text.scale.set(1, 1, 1);
-  
-            this.scene.add(textContainer);
-  
-            this.addDescriptionText(image.caption, plane.position, loader, font);
-          });
-  
+
+          // Criando a posição para o texto, abaixo da imagem, mantendo a rotação da imagem
+          const textPosition = new THREE.Vector3(
+            plane.position.x,
+            plane.position.y - this.height / 2 - 5, // Ajuste para posicionar o texto abaixo
+            plane.position.z
+          );
+
+          // Adicionar reflexão da imagem
           this.addReflection(image.url, angle);
+
+          // Adicionar descrição
+          this.addDescriptionText(image.caption, plane, textPosition, fontLoader, this.width);
         },
         undefined,
         (error) => {
@@ -153,32 +159,54 @@ export class CarouselComponent implements OnInit {
     });
   }
 
-  addDescriptionText(description: string, planePosition: THREE.Vector3, loader: FontLoader, font: any): void {
-    loader.load('assets/fonts/helvetiker_regular.typeface.js', (font) => {
-      let size = 0.4 * (this.width / description.length); 
-      let height = 1;
+  addDescriptionText(description: string, plane: THREE.Mesh, textPosition: THREE.Vector3, fontLoader: FontLoader, width: number): void {
   
-      const text3d = new TextGeometry(description, {
-        size: size,
-        height: height,
-        curveSegments: 2,
-        font: font,
+    const fontMap: { [key: string]: string } = {
+      helvetiker: 'assets/fonts/helvetiker_regular.typeface.json',
+    };
+  
+    const fontPath = fontMap['helvetiker'];
+    if (fontPath) {
+      fontLoader.load(fontPath, (loadedFont) => {
+  
+        const size = Math.max(0.6 * (width / description.length), 5); // Garante que o tamanho mínimo seja 5
+        const height = 2; // Altura fixa do texto
+  
+        const textGeometry = new TextGeometry(description, {
+          size: size,
+          depth: height,
+          curveSegments: 2,
+          font: loadedFont,
+        });
+  
+        // Atualizar o bounding box da geometria
+        textGeometry.computeBoundingBox();
+        const boundingBox = textGeometry.boundingBox!;
+        const textWidth = boundingBox.max.x - boundingBox.min.x;
+  
+        const textMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
+        const textMesh = new THREE.Mesh(textGeometry, textMaterial);
+  
+        // Centralizando o texto horizontalmente
+        textMesh.position.set(-textWidth / 2, 0, 0); // Centraliza o texto dentro do container
+  
+        const textContainer = new THREE.Object3D();
+        textContainer.add(textMesh);
+  
+        // Posicionando o texto abaixo da imagem
+        textContainer.position.set(
+          textPosition.x,
+          textPosition.y + 10,
+          textPosition.z
+        );
+  
+        // Ajustar a rotação do texto para coincidir com o plano
+        textContainer.rotation.set(0, plane.rotation.y + Math.PI, 0);
+  
+        // Adiciona o texto à cena
+        this.scene.add(textContainer);
       });
-  
-      const textMaterial = new THREE.MeshBasicMaterial({ color: 0x888888 });
-      const text = new THREE.Mesh(text3d, textMaterial);
-  
-      const textContainer = new THREE.Object3D();
-      textContainer.add(text);
-  
-      text.position.x = planePosition.x;
-      text.position.y = planePosition.y - 1.2 * this.height;
-      text.position.z = planePosition.z;
-  
-      text.scale.set(1, 1, 1);
-  
-      this.scene.add(textContainer);
-    });
+    }
   }
 
   addReflection(imageUrl: string, angle: number): void {
@@ -216,12 +244,10 @@ export class CarouselComponent implements OnInit {
         const reflectionMesh = new THREE.Mesh(new THREE.PlaneGeometry(this.width, reflectH), reflectionMaterial);
         reflectionMesh.rotation.y = -angle - Math.PI / 2;
         reflectionMesh.position.set(this.radius * Math.cos(angle), -(this.height / 2), this.radius * Math.sin(angle));
-        reflectionMesh.scale.x = -1;
+        reflectionMesh.scale.x = 0.75;
         reflectionMesh.position.y -= 50;
 
         this.scene.add(reflectionMesh);
-      } else {
-        console.error('Falha ao obter o contexto 2D do canvas');
       }
     });
   }
@@ -237,6 +263,7 @@ export class CarouselComponent implements OnInit {
     if (this.carouselupdate) {
       this.scene.rotation.y += (this.targetRotationY - this.scene.rotation.y) * 0.05;
     }
+    this.targetRotationY += 0.001
 
     if (this.updatecamera && Math.abs(this.mouse.y - this.prevmouse.y) > Math.abs(this.mouse.x - this.prevmouse.x)) {
       this.camera.position.z += (this.mouse.y - this.prevmouse.y) * 20;
@@ -246,47 +273,51 @@ export class CarouselComponent implements OnInit {
     this.carouselupdate = true;
   }
 
-  // Mouse events
   onDocumentMouseDown(event: MouseEvent): void {
+    event.preventDefault();
     this.mouseDown = true;
     this.startX = event.clientX;
-  }
-
-  onDocumentMouseUp(event: MouseEvent): void {
-    this.mouseDown = false;
-    this.targetRotationY += (this.currentX - this.startX) * 0.005;
-    this.currentRotationY = this.targetRotationY;
+    this.prevMouseX = this.startX;
   }
 
   onDocumentMouseMove(event: MouseEvent): void {
-    if (this.mouseDown) {
-      this.currentX = event.clientX;
-      const deltaX = this.currentX - this.startX;
-      this.targetRotationY = this.currentRotationY + deltaX * this.rotationSpeed;
-    }
+    if (!this.mouseDown) return;
+
+    this.currentX = event.clientX;
+    const deltaX = this.currentX - this.prevMouseX;
+    this.targetRotationY += deltaX * 0.005;
+    this.prevMouseX = this.currentX;
+    this.carouselupdate = true;
+  }
+
+  onDocumentMouseUp(): void {
+    this.mouseDown = false;
   }
 
   onDocumentMouseOut(): void {
     this.mouseDown = false;
   }
 
-  // Touch events
-  onTouchStart(event: TouchEvent): void {
-    this.mouseDown = true;
-    this.startX = event.touches[0].clientX;
-  }
-
-  onTouchEnd(event: TouchEvent): void {
-    this.mouseDown = false;
-    this.targetRotationY += (this.currentX - this.startX) * 0.005;
-    this.currentRotationY = this.targetRotationY;
-  }
-
-  onTouchMove(event: TouchEvent): void {
-    if (this.mouseDown) {
-      this.currentX = event.touches[0].clientX;
-      const deltaX = this.currentX - this.startX;
-      this.targetRotationY = this.currentRotationY + deltaX * this.rotationSpeed;
+  onDocumentTouchStart(event: TouchEvent): void {
+    if (event.touches.length === 1) {
+      this.mouseDown = true;
+      this.startX = event.touches[0].clientX;
+      this.prevMouseX = this.startX;
     }
   }
+
+  onDocumentTouchMove(event: TouchEvent): void {
+    if (!this.mouseDown || event.touches.length !== 1) return;
+
+    this.currentX = event.touches[0].clientX;
+    const deltaX = this.currentX - this.prevMouseX;
+    this.targetRotationY += deltaX * 0.005;
+    this.prevMouseX = this.currentX;
+    this.carouselupdate = true;
+  }
+
+  onDocumentTouchEnd(): void {
+    this.mouseDown = false;
+  }
+
 }
