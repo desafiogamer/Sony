@@ -1,0 +1,113 @@
+.toast-stack {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 2000;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  pointer-events: none;
+}
+
+.toast {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: min(340px, calc(100vw - 40px));
+  padding: 12px 14px;
+  overflow: hidden;
+  border-radius: var(--radius);
+  border: 1px solid var(--border-strong);
+  background: rgba(16, 16, 32, 0.92);
+  backdrop-filter: blur(20px) saturate(160%);
+  box-shadow: var(--shadow);
+  pointer-events: auto;
+  animation: toastIn 0.4s var(--ease);
+}
+
+@keyframes toastIn {
+  from { opacity: 0; transform: translateX(40px) scale(0.96); }
+  to { opacity: 1; transform: translateX(0) scale(1); }
+}
+
+.toast-img {
+  width: 42px;
+  height: 52px;
+  flex-shrink: 0;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+}
+
+.toast-check {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius-pill);
+  background: linear-gradient(135deg, var(--ps-blue), var(--accent));
+  color: #04121f;
+}
+
+.toast-check svg { width: 19px; height: 19px; }
+
+.toast-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.toast-body strong {
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+.toast-body span {
+  font-size: 0.79rem;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.toast button {
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-sm);
+  color: var(--text-dim);
+  transition: all 0.2s var(--ease);
+}
+
+.toast button svg { width: 15px; height: 15px; }
+
+.toast button:hover {
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.toast-bar {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 2px;
+  width: 100%;
+  transform-origin: left;
+  background: linear-gradient(90deg, var(--ps-blue), var(--accent));
+  animation: toastBar 3.2s linear forwards;
+}
+
+@keyframes toastBar {
+  from { transform: scaleX(1); }
+  to { transform: scaleX(0); }
+}
+
+@media (max-width: 520px) {
+  .toast-stack { right: 12px; left: 12px; bottom: 12px; }
+  .toast { width: 100%; }
+}

@@ -1,0 +1,101 @@
+<div class="overlay" [class.is-open]="cart.isOpen()" (click)="cart.close()" aria-hidden="true"></div>
+
+<aside
+  class="drawer"
+  [class.is-open]="cart.isOpen()"
+  role="dialog"
+  aria-label="Carrinho de compras"
+  [attr.aria-hidden]="!cart.isOpen()">
+
+  <header class="drawer-head">
+    <div>
+      <h2>Seu carrinho</h2>
+      <p>{{ cart.count() }} {{ cart.count() === 1 ? 'item' : 'itens' }}</p>
+    </div>
+    <button type="button" class="close" (click)="cart.close()" aria-label="Fechar carrinho">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+        <path d="M6 6l12 12M18 6L6 18"/>
+      </svg>
+    </button>
+  </header>
+
+  @if (cart.items().length) {
+    <div class="frete">
+      @if (faltaParaFreteGratis() > 0) {
+        <p>Faltam <strong>{{ faltaParaFreteGratis() | currency:'BRL' }}</strong> para o frete grátis</p>
+      } @else {
+        <p class="ok">🎉 Você ganhou <strong>frete grátis</strong></p>
+      }
+      <div class="bar"><span [style.width.%]="progressoFrete()"></span></div>
+    </div>
+
+    <ul class="items">
+      @for (item of cart.items(); track item.product.id) {
+        <li class="item">
+          <div class="thumb">
+            <img [src]="item.product.image" [alt]="item.product.nome" loading="lazy">
+          </div>
+
+          <div class="info">
+            <h3>{{ item.product.nome }}</h3>
+            <span class="platform">{{ item.product.platform }}</span>
+
+            <div class="row">
+              <div class="qty">
+                <button type="button" (click)="cart.decrement(item.product.id)" aria-label="Diminuir quantidade">−</button>
+                <span>{{ item.quantity }}</span>
+                <button type="button" (click)="cart.increment(item.product.id)" aria-label="Aumentar quantidade">+</button>
+              </div>
+              <strong class="price">{{ item.product.price * item.quantity | currency:'BRL' }}</strong>
+            </div>
+          </div>
+
+          <button type="button" class="trash" (click)="cart.remove(item.product.id)" [attr.aria-label]="'Remover ' + item.product.nome">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/>
+            </svg>
+          </button>
+        </li>
+      }
+    </ul>
+
+    <footer class="drawer-foot">
+      @if (cart.savings() > 0) {
+        <div class="line discount">
+          <span>Economia</span>
+          <span>− {{ cart.savings() | currency:'BRL' }}</span>
+        </div>
+      }
+      <div class="line">
+        <span>Entrega digital</span>
+        <span class="free">Grátis</span>
+      </div>
+      <div class="line total">
+        <span>Total</span>
+        <strong>{{ cart.subtotal() | currency:'BRL' }}</strong>
+      </div>
+
+      <button type="button" class="btn btn-primary checkout" (click)="finalizar()" [disabled]="finalizando()">
+        @if (finalizando()) {
+          <span class="spinner"></span> Processando…
+        } @else {
+          Finalizar compra
+        }
+      </button>
+      <button type="button" class="clear" (click)="cart.clear()">Esvaziar carrinho</button>
+    </footer>
+  } @else {
+    <div class="empty">
+      <div class="empty-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="9" cy="20" r="1.4"/>
+          <circle cx="18" cy="20" r="1.4"/>
+          <path d="M2 3h2.2l2.3 12.2a1.8 1.8 0 0 0 1.8 1.4h8.5a1.8 1.8 0 0 0 1.8-1.4L21 7H5.4"/>
+        </svg>
+      </div>
+      <h3>Carrinho vazio</h3>
+      <p>Explore os exclusivos PlayStation e comece sua coleção.</p>
+      <a class="btn btn-primary" routerLink="/products" (click)="cart.close()">Ver produtos</a>
+    </div>
+  }
+</aside>

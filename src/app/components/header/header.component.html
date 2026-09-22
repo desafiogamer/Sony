@@ -1,7 +1,42 @@
-<header>
-  <img src="assets/logo/logo.png" alt="icone" width="171px" height="30px">
-  <nav class="navBar">
-    <a routerLink="" href="{{href}}">Home</a>
-    <a routerLink="/products" href="{{href}}">Produtos</a>
+<header class="header" [class.is-scrolled]="scrolled()">
+  <a class="brand" routerLink="" (click)="closeMenu()" aria-label="Sony Store — início">
+    <img src="assets/logo/logo.png" alt="Sony" width="140" height="25">
+    <span class="brand-tag">STORE</span>
+  </a>
+
+  <nav class="nav" [class.is-open]="menuOpen()">
+    <a routerLink="" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="closeMenu()">
+      <span>Home</span>
+    </a>
+    <a routerLink="/products" routerLinkActive="active" (click)="closeMenu()">
+      <span>Produtos</span>
+    </a>
   </nav>
+
+  <div class="actions">
+    <button
+      type="button"
+      class="cart-btn"
+      [class.has-items]="cart.count() > 0"
+      (click)="cart.open()"
+      [attr.aria-label]="'Abrir carrinho com ' + cart.count() + ' itens'">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="9" cy="20" r="1.4"/>
+        <circle cx="18" cy="20" r="1.4"/>
+        <path d="M2 3h2.2l2.3 12.2a1.8 1.8 0 0 0 1.8 1.4h8.5a1.8 1.8 0 0 0 1.8-1.4L21 7H5.4"/>
+      </svg>
+      @if (cart.count() > 0) {
+        <span class="cart-count">{{ cart.count() }}</span>
+      }
+    </button>
+
+    <button
+      type="button"
+      class="burger"
+      [class.is-open]="menuOpen()"
+      (click)="toggleMenu()"
+      aria-label="Abrir menu">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
 </header>

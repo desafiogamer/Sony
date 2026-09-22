@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef } from '@angular/core';
+import { AfterViewInit, Component, NgZone, OnDestroy, inject } from '@angular/core';
 import * as THREE from 'three';
 
 @Component({
@@ -8,7 +8,7 @@ import * as THREE from 'three';
   templateUrl: './modelo-3-d.component.html',
   styleUrls: ['./modelo-3-d.component.css']
 })
-export class Modelo3DComponent implements AfterViewInit {
+export class Modelo3DComponent implements AfterViewInit, OnDestroy {
   private scene!: THREE.Scene;
   private camera!: THREE.PerspectiveCamera;
   private renderer!: THREE.WebGLRenderer;
@@ -16,11 +16,25 @@ export class Modelo3DComponent implements AfterViewInit {
   private flash!: THREE.PointLight;
   private cloudParticles: THREE.Mesh[] = [];
 
-  constructor(private elRef: ElementRef) {}
+  private readonly zone = inject(NgZone);
+  private frameId = 0;
 
   ngAfterViewInit(): void {
     this.init();
   }
+
+  ngOnDestroy(): void {
+    cancelAnimationFrame(this.frameId);
+    window.removeEventListener('resize', this.onResize);
+    this.renderer?.domElement.remove();
+    this.renderer?.dispose();
+  }
+
+  private onResize = (): void => {
+    this.camera.aspect = window.innerWidth / window.innerHeight;
+    this.camera.updateProjectionMatrix();
+    this.renderer.setSize(window.innerWidth, window.innerHeight);
+  };
 
   private init(): void {
     this.scene = new THREE.Scene();
@@ -42,15 +56,20 @@ export class Modelo3DComponent implements AfterViewInit {
     this.flash.position.set(200, 300, 100);
     this.scene.add(this.flash);
 
-    this.renderer = new THREE.WebGLRenderer();
+    this.renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: 'low-power' });
     this.renderer.setSize(window.innerWidth, window.innerHeight);
-    this.renderer.setClearColor(0x11111f);
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+    this.renderer.setClearColor(0x07070f);
+    this.renderer.domElement.id = 'bg-canvas';
     document.body.appendChild(this.renderer.domElement);
 
     this.rainGroup = this.initRain();
     this.initClouds();
 
-    this.animate();
+    window.addEventListener('resize', this.onResize);
+
+    // Fundo animado nao precisa de change detection a cada frame.
+    this.zone.runOutsideAngular(() => this.animate());
   }
 
   private initRain(): THREE.Group {
@@ -137,7 +156,7 @@ export class Modelo3DComponent implements AfterViewInit {
   }
 
   private animate(): void {
-    requestAnimationFrame(() => this.animate());
+    this.frameId = requestAnimationFrame(() => this.animate());
 
     this.animateClouds();
     this.animateRain();

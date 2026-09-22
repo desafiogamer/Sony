@@ -1,0 +1,64 @@
+<article class="card" [style.animation-delay.ms]="index * 60">
+  <div class="media">
+    <img [src]="product.image" [alt]="product.nome" loading="lazy" decoding="async">
+    <div class="shine"></div>
+
+    <div class="tags">
+      @if (product.tag) {
+        <span class="badge tag-featured">{{ product.tag }}</span>
+      }
+      @if (descontoPercentual > 0) {
+        <span class="badge tag-off">-{{ descontoPercentual }}%</span>
+      }
+    </div>
+
+    <span class="platform">{{ product.platform }}</span>
+
+    <div class="overlay">
+      <p>{{ product.descricao }}</p>
+    </div>
+  </div>
+
+  <div class="body">
+    <div class="meta">
+      <span class="category">{{ product.category }}</span>
+      <span class="rating" [attr.aria-label]="'Nota ' + product.rating + ' de 5'">
+        @for (star of estrelas; track star) {
+          <svg viewBox="0 0 24 24" [class.filled]="star < product.rating" aria-hidden="true">
+            <path d="M12 2.6l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L12 17.4 6.2 20.5l1.1-6.5L2.6 9.4l6.5-.9z"/>
+          </svg>
+        }
+        <b>{{ product.rating }}</b>
+      </span>
+    </div>
+
+    <h3 class="nome">{{ product.nome }}</h3>
+    <span class="lancamento">Lançamento {{ product.lancamento }}</span>
+
+    <div class="foot">
+      <div class="precos">
+        @if (product.oldPrice) {
+          <s>{{ product.oldPrice | currency:'BRL' }}</s>
+        }
+        <strong>{{ product.price | currency:'BRL' }}</strong>
+      </div>
+
+      <button
+        type="button"
+        class="add"
+        [class.is-added]="added()"
+        (click)="adicionar()"
+        [attr.aria-label]="'Adicionar ' + product.nome + ' ao carrinho'">
+        @if (added()) {
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 12.5l5.2 5.2L20 7"/>
+          </svg>
+        } @else {
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 5v14M5 12h14"/>
+          </svg>
+        }
+      </button>
+    </div>
+  </div>
+</article>

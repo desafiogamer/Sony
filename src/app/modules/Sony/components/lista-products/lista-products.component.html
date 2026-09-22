@@ -1,1 +1,5 @@
-<app-products [produtos]="products"/>
+<div class="lista-grid">
+  @for (produto of lista; track produto.id; let i = $index) {
+    <app-product-card [product]="produto" [index]="i"/>
+  }
+</div>

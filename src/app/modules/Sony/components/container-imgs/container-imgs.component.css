@@ -1,38 +1,80 @@
-.img{
+.img {
   position: absolute;
-  bottom: -10px;
-  right: 0;
+  bottom: 0;
+  right: clamp(12px, 2.5vw, 48px);
   z-index: 2;
-  animation: efeito .3s linear;
-
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  max-height: 100%;
+  pointer-events: none;
+  animation: entrada 0.9s var(--ease) both;
 }
 
-.img img{
-  animation: efect 2s infinite linear;
+/* Halo atrás do personagem, para ele não ficar solto no fundo */
+.img::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: 6%;
+  width: 115%;
+  aspect-ratio: 1;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(0, 112, 209, 0.3), transparent 62%);
+  filter: blur(28px);
+  z-index: -1;
 }
 
-@keyframes efeito{
-  0%{
-      opacity: 0;
-      transform: translateY(800px);
-  }
+/* Dissolve a base da imagem no fundo da página */
+.img::after {
+  content: '';
+  position: absolute;
+  inset: auto -10% 0 -10%;
+  height: 13%;
+  background: linear-gradient(to top, var(--bg) 8%, transparent);
+}
 
-  100%{
-      opacity: 1;
-      transform: translateY(0);
+.img img {
+  /*
+    Ocupa da base do header ate o fim da viewport. A arte original tem 350x603,
+    entao aqui ela roda ampliada (~1.8x em 1080p); o contraste/saturacao extra
+    compensa parte da suavizacao da interpolacao.
+  */
+  width: auto;
+  height: calc(100vh - var(--header-h) - 10px);
+  height: calc(100svh - var(--header-h) - 10px);
+  max-width: 46vw;
+  object-fit: contain;
+  filter: drop-shadow(-18px 12px 40px rgba(0, 0, 0, 0.65)) contrast(1.06) saturate(1.1);
+  animation: respiro 7s ease-in-out infinite;
+}
+
+@keyframes entrada {
+  from {
+    opacity: 0;
+    transform: translateY(60px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
-@keyframes efect {
-  0% {
-      transform: scale(1);
+@keyframes respiro {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+@media (max-width: 980px) {
+  .img {
+    right: 0;
+    left: 0;
+    opacity: 0.28;
   }
 
-  50% {
-      transform: scale(1.015);
-  }
-
-  100% {
-      transform: scale(1);
+  .img img {
+    height: calc(100svh - var(--header-h) - 10px);
+    max-width: 82vw;
   }
 }

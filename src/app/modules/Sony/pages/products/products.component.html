@@ -1,4 +1,71 @@
-<section id="produtos">
-  <app-linhas/>
-  <app-container-imgs [src]="src" [alt]="alt"/>
+<section id="produtos" class="page">
+  <div class="aura aura-a"></div>
+  <div class="aura aura-b"></div>
+
+  <header class="hero">
+    <span class="badge eyebrow">Catálogo PlayStation</span>
+    <h1>Exclusivos que só existem <em>aqui</em>.</h1>
+    <p>Mundos inteiros esperando por você. Entrega digital imediata, direto na sua biblioteca.</p>
+  </header>
+
+  <div class="toolbar">
+    <label class="search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+        <circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>
+      </svg>
+      <input
+        type="search"
+        placeholder="Buscar jogo…"
+        [value]="busca()"
+        (input)="onBusca($event)"
+        aria-label="Buscar jogo">
+    </label>
+
+    <div class="chips" role="tablist" aria-label="Filtrar por categoria">
+      @for (categoria of categorias(); track categoria) {
+        <button
+          type="button"
+          role="tab"
+          class="chip"
+          [class.active]="categoriaAtiva() === categoria"
+          [attr.aria-selected]="categoriaAtiva() === categoria"
+          (click)="setCategoria(categoria)">
+          {{ categoria }}
+        </button>
+      }
+    </div>
+
+    <label class="sort">
+      <span class="sr-only">Ordenar por</span>
+      <select [value]="ordem()" (change)="onOrdem($event)" aria-label="Ordenar por">
+        <option value="destaque">Destaques</option>
+        <option value="menor">Menor preço</option>
+        <option value="maior">Maior preço</option>
+        <option value="nota">Melhor avaliados</option>
+        <option value="nome">Nome (A–Z)</option>
+      </select>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M6 9l6 6 6-6"/>
+      </svg>
+    </label>
+  </div>
+
+  <p class="resultado">
+    {{ produtosFiltrados().length }}
+    {{ produtosFiltrados().length === 1 ? 'jogo encontrado' : 'jogos encontrados' }}
+  </p>
+
+  @if (produtosFiltrados().length) {
+    <div class="grid">
+      @for (produto of produtosFiltrados(); track produto.id; let i = $index) {
+        <app-product-card [product]="produto" [index]="i"/>
+      }
+    </div>
+  } @else {
+    <div class="vazio">
+      <h2>Nada por aqui</h2>
+      <p>Não encontramos jogos com esses filtros.</p>
+      <button type="button" class="btn btn-ghost" (click)="limparFiltros()">Limpar filtros</button>
+    </div>
+  }
 </section>

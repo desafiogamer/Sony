@@ -1,0 +1,11 @@
+.lista-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(245px, 1fr));
+  gap: clamp(16px, 2vw, 26px);
+}
+
+@media (max-width: 760px) {
+  .lista-grid {
+    grid-template-columns: repeat(auto-fill, minmax(155px, 1fr));
+  }
+}

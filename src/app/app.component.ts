@@ -1,9 +1,10 @@
 import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
+
 import { HeaderComponent } from './components/header/header.component';
-import { CardShopComponent } from './components/card-shop/card-shop.component';
+import { CartDrawerComponent } from './components/cart-drawer/cart-drawer.component';
+import { ToastComponent } from './components/toast/toast.component';
 import { Modelo3DComponent } from './components/modelo-3-d/modelo-3-d.component';
-import { CarouselComponent } from './components/carousel/carousel.component';
 
 @Component({
   selector: 'app-root',
@@ -11,29 +12,34 @@ import { CarouselComponent } from './components/carousel/carousel.component';
   imports: [
     HeaderComponent,
     RouterOutlet,
-    CardShopComponent,
-    Modelo3DComponent,
-    CarouselComponent
+    CartDrawerComponent,
+    ToastComponent,
+    Modelo3DComponent
   ],
 
   template: `
-    <!--Header-->
-    <app-header/>
-
-    <!--Carrinho de compra-->
-    <app-card-shop/>
-
-    <!--modelo 3D-->
-    @defer(){
+    <!-- Fundo 3D (chuva + nuvens) -->
+    @defer (on idle) {
       <app-modelo-3-d/>
     }
-    <app-carousel/>
 
-    <!--Rotas-->
-    <router-outlet/>
+    <!-- Header fixo -->
+    <app-header/>
 
-  `
+    <!-- Conteúdo das rotas -->
+    <main>
+      <router-outlet/>
+    </main>
+
+    <!-- Carrinho lateral e notificações -->
+    <app-cart-drawer/>
+    <app-toast/>
+  `,
+  styles: [`
+    main {
+      display: block;
+      min-height: 100vh;
+    }
+  `]
 })
-export class AppComponent {
-
-}
+export class AppComponent {}

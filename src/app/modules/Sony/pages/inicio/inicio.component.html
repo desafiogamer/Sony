@@ -1,5 +1,112 @@
-<section id="home">
+<!-- ================= HERO ================= -->
+<section id="home" class="hero">
+  <div class="aura aura-a"></div>
+  <div class="aura aura-b"></div>
+
   <app-linhas/>
+
+  <div class="hero-content">
+    <span class="badge eyebrow">
+      <i class="dot"></i> Novidades PlayStation 5
+    </span>
+
+    <h1>
+      Entre em mundos<br>
+      <em>que respiram.</em>
+    </h1>
+
+    <p>
+      Os maiores exclusivos da Sony reunidos em um só lugar. Narrativas que
+      marcam, gráficos que impressionam e entrega digital imediata.
+    </p>
+
+    <div class="cta">
+      <a class="btn btn-primary" routerLink="/products">
+        Explorar catálogo
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M5 12h13M13 6l6 6-6 6"/>
+        </svg>
+      </a>
+      <a class="btn btn-ghost" href="#destaques">Ver destaques</a>
+    </div>
+
+    <ul class="stats">
+      @for (stat of stats; track stat.rotulo) {
+        <li>
+          <strong>{{ stat.valor }}</strong>
+          <span>{{ stat.rotulo }}</span>
+        </li>
+      }
+    </ul>
+  </div>
+
   <app-container-imgs [src]="src" [alt]="alt"/>
+
+  <a class="scroll-hint" href="#galeria" aria-label="Rolar para a galeria">
+    <span class="mouse"><i></i></span>
+    Role para explorar
+  </a>
 </section>
 
+<!-- ================= GALERIA 3D ================= -->
+<section id="galeria" class="galeria">
+  <header class="section-head">
+    <span class="badge eyebrow">Galeria imersiva</span>
+    <h2>Arraste para girar o universo</h2>
+    <p>Um carrossel 3D com as capas dos exclusivos mais aclamados da geração.</p>
+  </header>
+
+  <div class="palco">
+    <app-carousel/>
+  </div>
+</section>
+
+<!-- ================= DESTAQUES ================= -->
+<section id="destaques" class="destaques">
+  <header class="section-head row">
+    <div>
+      <span class="badge eyebrow">Seleção da semana</span>
+      <h2>Destaques da loja</h2>
+    </div>
+    <a class="link-all" routerLink="/products">
+      Ver tudo
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M5 12h13M13 6l6 6-6 6"/>
+      </svg>
+    </a>
+  </header>
+
+  <div class="grid">
+    @for (produto of destaques(); track produto.id; let i = $index) {
+      <app-product-card [product]="produto" [index]="i"/>
+    }
+  </div>
+</section>
+
+<!-- ================= CHAMADA FINAL ================= -->
+<section class="cta-final">
+  <div class="cta-card">
+    <h2>Pronto para o próximo mundo?</h2>
+    <p>Mais de 120 títulos com desconto e ativação imediata na sua conta PlayStation.</p>
+    <a class="btn btn-primary" routerLink="/products">Começar agora</a>
+  </div>
+</section>
+
+<footer class="rodape">
+  <div class="rodape-top">
+    <div class="rodape-brand">
+      <img src="assets/logo/logo.png" alt="Sony" width="130" height="24">
+      <p>Loja conceito criada como projeto de estudo. Não afiliada à Sony Interactive Entertainment.</p>
+    </div>
+
+    <nav class="rodape-links">
+      <a routerLink="">Home</a>
+      <a routerLink="/products">Produtos</a>
+      <a href="#destaques">Destaques</a>
+    </nav>
+  </div>
+
+  <div class="rodape-bottom">
+    <span>© 2026 Sony Store · Desenvolvido por João Vitor Gentil da Silva</span>
+  </div>
+</footer>

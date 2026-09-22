@@ -1,17 +1,20 @@
 import { Routes } from '@angular/router';
 
-//pages
-import { InicioComponent } from './modules/Sony/pages/inicio/inicio.component';
-import { ProductsComponent } from './modules/Sony/pages/products/products.component';
-
-
 export const routes: Routes = [
   {
-    path:'',
-    component: InicioComponent
+    path: '',
+    title: 'Sony Store — Exclusivos PlayStation',
+    loadComponent: () =>
+      import('./modules/Sony/pages/inicio/inicio.component').then(m => m.InicioComponent)
   },
   {
     path: 'products',
-    component: ProductsComponent
+    title: 'Produtos — Sony Store',
+    loadComponent: () =>
+      import('./modules/Sony/pages/products/products.component').then(m => m.ProductsComponent)
+  },
+  {
+    path: '**',
+    redirectTo: ''
   }
 ];
