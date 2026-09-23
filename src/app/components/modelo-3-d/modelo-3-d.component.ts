@@ -3,15 +3,11 @@ import * as THREE from 'three';
 
 /** Velocidade da chuva em unidades por segundo (independente da taxa de quadros). */
 const RAIN_SPEED = 90;
+/** Alongamento vertical da gota. */
+const DROP_STRETCH = 8;
 const CLOUD_SPIN = 0.06;
 /** Raios por segundo, em media. */
 const FLASH_RATE = 6;
-
-/**
- * O fundo e decorativo: 30fps bastam. Como todo movimento e calculado por
- * tempo decorrido, limitar a taxa nao produz solavanco.
- */
-const FRAME_MS = 1000 / 30 - 2;
 
 /**
  * Fracao da resolucao da tela em que a cena e desenhada. O canvas e esticado
@@ -41,7 +37,6 @@ export class Modelo3DComponent implements AfterViewInit, OnDestroy {
   private readonly zone = inject(NgZone);
   private frameId = 0;
   private lastTime = 0;
-  private lastDraw = 0;
   private paused = false;
   private rainCount = 0;
 
@@ -163,7 +158,7 @@ export class Modelo3DComponent implements AfterViewInit, OnDestroy {
     this.rainCount = window.innerWidth < 760 ? 900 : 2000;
 
     const dropGeometry = new THREE.SphereGeometry(0.05, 6, 4);
-    dropGeometry.scale(3, 8, 3);
+    dropGeometry.scale(3, DROP_STRETCH, 3);
 
     const rainMaterial = new THREE.MeshPhongMaterial({
       color: 0xffffff,
@@ -253,8 +248,6 @@ export class Modelo3DComponent implements AfterViewInit, OnDestroy {
     this.frameId = requestAnimationFrame(time => this.animate(time));
 
     if (this.paused) return;
-    if (now - this.lastDraw < FRAME_MS) return;
-    this.lastDraw = now;
 
     // Tudo se move por segundo, nao por quadro: taxa irregular nao vira tranco.
     const dt = this.lastTime ? Math.min((now - this.lastTime) / 1000, 0.05) : 1 / 60;
