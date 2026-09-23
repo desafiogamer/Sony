@@ -1,8 +1,9 @@
 import { AfterViewInit, Component, ElementRef, NgZone, OnDestroy, ViewChild, inject } from '@angular/core';
 import * as THREE from 'three';
-import * as TWEEN from '@tweenjs/tween.js';
+import { Font, FontLoader } from 'three/examples/jsm/loaders/FontLoader.js';
 import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js';
-import { FontLoader } from 'three/examples/jsm/loaders/FontLoader.js';
+
+const FONT_PATH = 'assets/fonts/helvetiker_regular.typeface.json';
 
 @Component({
   selector: 'app-carousel',
@@ -16,12 +17,12 @@ export class CarouselComponent implements AfterViewInit, OnDestroy {
   private readonly zone = inject(NgZone);
 
   images = [
-    { url: 'assets/img/spiderinicio.webp', caption: 'Spider Man 2' },
-    { url: 'assets/img/ghost-of-tsushima.webp', caption: 'Ghost of Tsushima' },
-    { url: 'assets/img/forbidden.webp', caption: 'Horizon Forbidden West' },
-    { url: 'assets/img/the-last-of-us.webp', caption: 'The Last of Us' },
-    { url: 'assets/img/godrag.webp', caption: 'God of War Ragnarok' },
-    { url: 'assets/img/death-stranding.webp', caption: 'Death Stranding' },
+    { url: 'assets/img/carousel/spiderinicio.webp', caption: 'Spider Man 2' },
+    { url: 'assets/img/carousel/ghost-of-tsushima.webp', caption: 'Ghost of Tsushima' },
+    { url: 'assets/img/carousel/forbidden.webp', caption: 'Horizon Forbidden West' },
+    { url: 'assets/img/carousel/the-last-of-us.webp', caption: 'The Last of Us' },
+    { url: 'assets/img/carousel/godrag.webp', caption: 'God of War Ragnarok' },
+    { url: 'assets/img/carousel/death-stranding.webp', caption: 'Death Stranding' },
   ];
 
   radius = 250;
@@ -40,7 +41,15 @@ export class CarouselComponent implements AfterViewInit, OnDestroy {
   private prevPointerX = 0;
   private targetRotationY = 0;
   private frameId = 0;
+
   private resizeObserver?: ResizeObserver;
+  private intersectionObserver?: IntersectionObserver;
+
+  /** Só desenha quando o palco está na tela e a aba está visível. */
+  private inViewport = true;
+
+  private fontPromise?: Promise<Font>;
+  private readonly disposables: Array<THREE.BufferGeometry | THREE.Material | THREE.Texture> = [];
 
   /** Rotação automática contínua enquanto ninguém arrasta. */
   private readonly autoSpin = 0.0012;
@@ -61,11 +70,19 @@ export class CarouselComponent implements AfterViewInit, OnDestroy {
 
     this.resizeObserver = new ResizeObserver(() => this.onResize());
     this.resizeObserver.observe(container);
+
+    this.intersectionObserver = new IntersectionObserver(
+      ([entry]) => (this.inViewport = entry.isIntersecting),
+      { threshold: 0 }
+    );
+    this.intersectionObserver.observe(container);
+
   }
 
   ngOnDestroy(): void {
     cancelAnimationFrame(this.frameId);
     this.resizeObserver?.disconnect();
+    this.intersectionObserver?.disconnect();
 
     const container = this.carouselContainerRef.nativeElement;
     container.removeEventListener('pointerdown', this.onPointerDown);
@@ -74,6 +91,7 @@ export class CarouselComponent implements AfterViewInit, OnDestroy {
     container.removeEventListener('pointercancel', this.onPointerUp);
     container.removeEventListener('pointerleave', this.onPointerUp);
 
+    this.disposables.forEach(item => item.dispose());
     this.renderer?.dispose();
   }
 
@@ -94,7 +112,7 @@ export class CarouselComponent implements AfterViewInit, OnDestroy {
 
     this.renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
     this.renderer.setSize(width, height);
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
 
     this.carouselContainerRef.nativeElement.appendChild(this.renderer.domElement);
     this.angleStep = (2 * Math.PI) / this.images.length;
@@ -110,8 +128,14 @@ export class CarouselComponent implements AfterViewInit, OnDestroy {
   };
 
   loadImages(): void {
+    // Sem o cache, three.js rebaixa a mesma fonte/textura a cada chamada de load().
+    THREE.Cache.enabled = true;
+
+    // Uma requisição de fonte para as seis legendas, em paralelo com as texturas.
+    this.fontPromise = new FontLoader().loadAsync(FONT_PATH);
+    this.fontPromise.catch(() => undefined);
+
     const textureLoader = new THREE.TextureLoader();
-    const fontLoader = new FontLoader();
 
     this.images.forEach((image, index) => {
       textureLoader.load(
@@ -122,6 +146,7 @@ export class CarouselComponent implements AfterViewInit, OnDestroy {
           texture.magFilter = THREE.LinearFilter;
           texture.anisotropy = this.renderer.capabilities.getMaxAnisotropy();
           texture.needsUpdate = true;
+          this.disposables.push(texture);
 
           const material = new THREE.ShaderMaterial({
             uniforms: {
@@ -150,7 +175,10 @@ export class CarouselComponent implements AfterViewInit, OnDestroy {
             side: THREE.DoubleSide,
           });
 
-          const plane = new THREE.Mesh(new THREE.PlaneGeometry(this.width, this.height, 3, 3), material);
+          const geometry = new THREE.PlaneGeometry(this.width, this.height, 3, 3);
+          this.disposables.push(geometry, material);
+
+          const plane = new THREE.Mesh(geometry, material);
           const angle = index * this.angleStep;
           plane.rotation.y = -angle - Math.PI / 2;
           plane.position.set(this.radius * Math.cos(angle), 0, this.radius * Math.sin(angle));
@@ -164,8 +192,9 @@ export class CarouselComponent implements AfterViewInit, OnDestroy {
             plane.position.z
           );
 
-          this.addReflection(image.url, angle);
-          this.addDescriptionText(image.caption, plane, textPosition, fontLoader, this.width);
+          // A imagem já está decodificada: o reflexo reaproveita em vez de rebaixar.
+          this.addReflection(texture.image, angle);
+          this.addDescriptionText(image.caption, plane, textPosition);
         },
         undefined,
         (error) => {
@@ -175,11 +204,9 @@ export class CarouselComponent implements AfterViewInit, OnDestroy {
     });
   }
 
-  addDescriptionText(description: string, plane: THREE.Mesh, textPosition: THREE.Vector3, fontLoader: FontLoader, width: number): void {
-    const fontPath = 'assets/fonts/helvetiker_regular.typeface.json';
-
-    fontLoader.load(fontPath, (loadedFont) => {
-      const size = Math.max(0.6 * (width / description.length), 5);
+  addDescriptionText(description: string, plane: THREE.Mesh, textPosition: THREE.Vector3): void {
+    this.fontPromise?.then((loadedFont) => {
+      const size = Math.max(0.6 * (this.width / description.length), 5);
 
       const textGeometry = new TextGeometry(description, {
         size: size,
@@ -193,6 +220,8 @@ export class CarouselComponent implements AfterViewInit, OnDestroy {
       const textWidth = boundingBox.max.x - boundingBox.min.x;
 
       const textMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
+      this.disposables.push(textGeometry, textMaterial);
+
       const textMesh = new THREE.Mesh(textGeometry, textMaterial);
       textMesh.position.set(-textWidth / 2, 0, 0);
 
@@ -205,56 +234,58 @@ export class CarouselComponent implements AfterViewInit, OnDestroy {
     });
   }
 
-  addReflection(imageUrl: string, angle: number): void {
-    const textureLoader = new THREE.TextureLoader();
-    textureLoader.load(imageUrl, (texture) => {
-      const canvas = document.createElement('canvas');
-      const reflectH = this.height * this.reflectionHeightPer;
-      canvas.width = this.width;
-      canvas.height = reflectH;
+  addReflection(image: CanvasImageSource, angle: number): void {
+    const canvas = document.createElement('canvas');
+    const reflectH = this.height * this.reflectionHeightPer;
+    canvas.width = this.width;
+    canvas.height = reflectH;
 
-      const cntx = canvas.getContext('2d');
-      if (!cntx) return;
+    const cntx = canvas.getContext('2d');
+    if (!cntx) return;
 
-      cntx.save();
-      cntx.globalAlpha = this.reflectionOpacity;
-      cntx.translate(0, this.height - 1);
-      cntx.scale(1, -1);
-      cntx.drawImage(texture.image, 0, 0, this.width, this.height);
-      cntx.restore();
+    cntx.save();
+    cntx.globalAlpha = this.reflectionOpacity;
+    cntx.translate(0, this.height - 1);
+    cntx.scale(1, -1);
+    cntx.drawImage(image, 0, 0, this.width, this.height);
+    cntx.restore();
 
-      cntx.globalCompositeOperation = 'destination-out';
-      const gradient = cntx.createLinearGradient(0, 0, 0, reflectH);
-      gradient.addColorStop(1, 'rgba(255, 255, 255, 1.0)');
-      gradient.addColorStop(0, 'rgba(255, 255, 255, 0.0)');
-      cntx.fillStyle = gradient;
-      cntx.fillRect(0, 0, this.width, 2 * reflectH);
+    cntx.globalCompositeOperation = 'destination-out';
+    const gradient = cntx.createLinearGradient(0, 0, 0, reflectH);
+    gradient.addColorStop(1, 'rgba(255, 255, 255, 1.0)');
+    gradient.addColorStop(0, 'rgba(255, 255, 255, 0.0)');
+    cntx.fillStyle = gradient;
+    cntx.fillRect(0, 0, this.width, 2 * reflectH);
 
-      const reflectionTexture = new THREE.Texture(canvas);
-      reflectionTexture.needsUpdate = true;
-      const reflectionMaterial = new THREE.MeshBasicMaterial({
-        map: reflectionTexture,
-        side: THREE.DoubleSide,
-        transparent: true,
-      });
+    const reflectionTexture = new THREE.Texture(canvas);
+    reflectionTexture.needsUpdate = true;
 
-      const reflectionMesh = new THREE.Mesh(new THREE.PlaneGeometry(this.width, reflectH), reflectionMaterial);
-      reflectionMesh.rotation.y = -angle - Math.PI / 2;
-      reflectionMesh.position.set(this.radius * Math.cos(angle), -(this.height / 2), this.radius * Math.sin(angle));
-      reflectionMesh.scale.x = 0.75;
-      reflectionMesh.position.y -= 50;
-
-      this.scene.add(reflectionMesh);
+    const reflectionMaterial = new THREE.MeshBasicMaterial({
+      map: reflectionTexture,
+      side: THREE.DoubleSide,
+      transparent: true,
     });
+
+    const reflectionGeometry = new THREE.PlaneGeometry(this.width, reflectH);
+    this.disposables.push(reflectionTexture, reflectionMaterial, reflectionGeometry);
+
+    const reflectionMesh = new THREE.Mesh(reflectionGeometry, reflectionMaterial);
+    reflectionMesh.rotation.y = -angle - Math.PI / 2;
+    reflectionMesh.position.set(this.radius * Math.cos(angle), -(this.height / 2), this.radius * Math.sin(angle));
+    reflectionMesh.scale.x = 0.75;
+    reflectionMesh.position.y -= 50;
+
+    this.scene.add(reflectionMesh);
   }
 
   animate(): void {
     this.frameId = requestAnimationFrame(() => this.animate());
 
+    if (!this.inViewport || document.hidden) return;
+
     if (!this.dragging) this.targetRotationY += this.autoSpin;
     this.scene.rotation.y += (this.targetRotationY - this.scene.rotation.y) * 0.06;
 
-    TWEEN.update();
     this.renderer.render(this.scene, this.camera);
   }
 

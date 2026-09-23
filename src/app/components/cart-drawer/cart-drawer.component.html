@@ -33,7 +33,7 @@
       @for (item of cart.items(); track item.product.id) {
         <li class="item">
           <div class="thumb">
-            <img [src]="item.product.image" [alt]="item.product.nome" loading="lazy">
+            <img [src]="item.product.imageCard" [alt]="item.product.nome" width="72" height="92" loading="lazy">
           </div>
 
           <div class="info">

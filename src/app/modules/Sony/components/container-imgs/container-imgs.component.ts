@@ -8,6 +8,10 @@ import { Component, Input } from '@angular/core';
   styleUrl: './container-imgs.component.css'
 })
 export class ContainerImgsComponent {
-  @Input()src:string = '';
-  @Input()alt:string = '';
+  @Input() src = '';
+  @Input() alt = '';
+
+  /** Dimensoes reais do arquivo: reservam o espaco antes do download. */
+  @Input() width = 350;
+  @Input() height = 603;
 }

@@ -289,6 +289,11 @@ section {
   overflow: hidden;
 }
 
+.palco-placeholder {
+  width: 100%;
+  height: 100%;
+}
+
 .palco::after {
   content: 'arraste';
   position: absolute;
@@ -412,5 +417,10 @@ section {
   .section-head.row { flex-direction: column; align-items: flex-start; }
   .scroll-hint { display: none; }
   .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .palco::after { display: none; }
+  .palco-placeholder {
+  width: 100%;
+  height: 100%;
+}
+
+.palco::after { display: none; }
 }

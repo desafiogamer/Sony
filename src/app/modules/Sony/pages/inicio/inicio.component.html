@@ -57,7 +57,12 @@
   </header>
 
   <div class="palco">
-    <app-carousel/>
+    <!-- Three.js só entra em cena quando o palco chega perto da viewport. -->
+    @defer (on viewport) {
+      <app-carousel/>
+    } @placeholder {
+      <div class="palco-placeholder"></div>
+    }
   </div>
 </section>
 

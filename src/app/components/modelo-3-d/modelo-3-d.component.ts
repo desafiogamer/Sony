@@ -1,6 +1,12 @@
 import { AfterViewInit, Component, NgZone, OnDestroy, inject } from '@angular/core';
 import * as THREE from 'three';
 
+/** Velocidade da chuva em unidades por segundo (independente da taxa de quadros). */
+const RAIN_SPEED = 90;
+const CLOUD_SPIN = 0.06;
+/** Raios por segundo, em media. */
+const FLASH_RATE = 6;
+
 @Component({
   selector: 'app-modelo-3-d',
   standalone: true,
@@ -12,20 +18,36 @@ export class Modelo3DComponent implements AfterViewInit, OnDestroy {
   private scene!: THREE.Scene;
   private camera!: THREE.PerspectiveCamera;
   private renderer!: THREE.WebGLRenderer;
-  private rainGroup!: THREE.Group;
   private flash!: THREE.PointLight;
-  private cloudParticles: THREE.Mesh[] = [];
+
+  private rain!: THREE.InstancedMesh;
+  /** Matrizes de instancia da chuva, escritas direto para evitar custo por gota. */
+  private rainMatrices!: Float32Array;
+  private cloudParticles: THREE.Mesh<THREE.PlaneGeometry, THREE.MeshLambertMaterial>[] = [];
 
   private readonly zone = inject(NgZone);
   private frameId = 0;
+  private lastTime = 0;
+  private paused = false;
+  private rainCount = 0;
 
   ngAfterViewInit(): void {
+    // Sem animação de fundo para quem pediu menos movimento.
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
     this.init();
   }
 
   ngOnDestroy(): void {
     cancelAnimationFrame(this.frameId);
     window.removeEventListener('resize', this.onResize);
+    document.removeEventListener('visibilitychange', this.onVisibility);
+
+    this.rain?.geometry.dispose();
+    (this.rain?.material as THREE.Material)?.dispose();
+    this.cloudParticles.forEach(cloud => cloud.material.dispose());
+    this.cloudParticles[0]?.geometry.dispose();
+
     this.renderer?.domElement.remove();
     this.renderer?.dispose();
   }
@@ -34,6 +56,13 @@ export class Modelo3DComponent implements AfterViewInit, OnDestroy {
     this.camera.aspect = window.innerWidth / window.innerHeight;
     this.camera.updateProjectionMatrix();
     this.renderer.setSize(window.innerWidth, window.innerHeight);
+  };
+
+  /** Aba escondida não precisa desenhar nada. */
+  private onVisibility = (): void => {
+    this.paused = document.hidden;
+    // Zera o relogio para nao aplicar um salto gigante ao voltar.
+    this.lastTime = 0;
   };
 
   private init(): void {
@@ -63,18 +92,26 @@ export class Modelo3DComponent implements AfterViewInit, OnDestroy {
     this.renderer.domElement.id = 'bg-canvas';
     document.body.appendChild(this.renderer.domElement);
 
-    this.rainGroup = this.initRain();
+    this.initRain();
     this.initClouds();
 
     window.addEventListener('resize', this.onResize);
+    document.addEventListener('visibilitychange', this.onVisibility);
 
     // Fundo animado nao precisa de change detection a cada frame.
-    this.zone.runOutsideAngular(() => this.animate());
+    this.zone.runOutsideAngular(() => this.animate(performance.now()));
   }
 
-  private initRain(): THREE.Group {
-    const RAIN_COUNT = 2000;
-    const rainGroup = new THREE.Group();
+  /**
+   * Toda a chuva em um único InstancedMesh: uma geometria, um material e uma
+   * chamada de desenho por quadro, no lugar de milhares de Mesh individuais.
+   */
+  private initRain(): void {
+    this.rainCount = window.innerWidth < 760 ? 900 : 2000;
+
+    const dropGeometry = new THREE.SphereGeometry(0.05, 6, 4);
+    dropGeometry.scale(3, 8, 3);
+
     const rainMaterial = new THREE.MeshPhongMaterial({
       color: 0xffffff,
       transparent: true,
@@ -82,86 +119,96 @@ export class Modelo3DComponent implements AfterViewInit, OnDestroy {
       shininess: 50,
     });
 
-    for (let i = 0; i < RAIN_COUNT; i++) {
-      const dropGeometry = new THREE.SphereGeometry(0.05, 8, 8);
-      dropGeometry.scale(3, 8, 3);
+    this.rain = new THREE.InstancedMesh(dropGeometry, rainMaterial, this.rainCount);
+    this.rain.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+    this.rain.frustumCulled = false;
 
-      const rainDrop = new THREE.Mesh(dropGeometry, rainMaterial);
-      rainDrop.position.set(
-        Math.random() * 200 - 100,
-        Math.random() * 500 - 250,
-        Math.random() * 200 - 100
-      );
-      rainGroup.add(rainDrop);
+    // A escala ja esta na geometria, entao cada instancia e identidade + translacao.
+    this.rainMatrices = this.rain.instanceMatrix.array as Float32Array;
+
+    for (let i = 0; i < this.rainCount; i++) {
+      const o = i * 16;
+      this.rainMatrices[o] = 1;
+      this.rainMatrices[o + 5] = 1;
+      this.rainMatrices[o + 10] = 1;
+      this.rainMatrices[o + 15] = 1;
+      this.rainMatrices[o + 12] = Math.random() * 200 - 100;
+      this.rainMatrices[o + 13] = Math.random() * 500 - 250;
+      this.rainMatrices[o + 14] = Math.random() * 200 - 100;
     }
 
-    this.scene.add(rainGroup);
-    return rainGroup;
+    this.rain.instanceMatrix.needsUpdate = true;
+    this.scene.add(this.rain);
   }
 
-  private animateRain(): void {
-    this.rainGroup.children.forEach((drop) => {
-      drop.position.y -= 1.5;
+  private animateRain(dt: number): void {
+    const queda = RAIN_SPEED * dt;
 
-      if (drop.position.y < -100) {
-        drop.position.y = Math.random() * 200 + 100;
-        drop.position.x = Math.random() * 200 - 100;
-        drop.position.z = Math.random() * 200 - 100;
+    for (let i = 0; i < this.rainCount; i++) {
+      const y = i * 16 + 13;
+      this.rainMatrices[y] -= queda;
+
+      if (this.rainMatrices[y] < -100) {
+        this.rainMatrices[y] = Math.random() * 200 + 100;
+        this.rainMatrices[y - 1] = Math.random() * 200 - 100;
+        this.rainMatrices[y + 1] = Math.random() * 200 - 100;
       }
-    });
+    }
+
+    this.rain.instanceMatrix.needsUpdate = true;
   }
 
   private initClouds(): void {
     const loader = new THREE.TextureLoader();
     loader.load('assets/img/smoke.webp', (texture) => {
+      // Planos grandes e translúcidos custam preenchimento: poucos bastam.
       const cloudGeo = new THREE.PlaneGeometry(400, 400);
-      const cloudMaterial = new THREE.MeshLambertMaterial({
-        map: texture,
-        transparent: true,
-        depthWrite: false,
-      });
-  
-      for (let p = 0; p < 30; p++) {
+
+      for (let p = 0; p < 14; p++) {
+        // Material por nuvem, senão a opacidade de uma sobrescreve a das outras.
+        const cloudMaterial = new THREE.MeshLambertMaterial({
+          map: texture,
+          transparent: true,
+          depthWrite: false,
+          opacity: Math.random() * 0.2,
+        });
+
         const cloud = new THREE.Mesh(cloudGeo, cloudMaterial);
-        
-        // Valores personalizados para posição
-        const x = Math.random() * 800 - 380; // Ajuste de X
-        const y = 400 + Math.random() * 100; // Ajuste de Y
-        const z = Math.random() * 500 - 450; // Ajuste de Z
-        cloud.position.set(x, y, z);
-  
+        cloud.position.set(
+          Math.random() * 800 - 380,
+          400 + Math.random() * 100,
+          Math.random() * 500 - 450
+        );
         cloud.rotation.set(1.18, -0.12, Math.random() * Math.PI * 2);
-  
-        // Opacidade inicial personalizada
-        cloud.material.opacity = Math.random() * 0.2;
-  
+
         this.cloudParticles.push(cloud);
         this.scene.add(cloud);
       }
     });
   }
-  
-  private animateClouds(): void {
-    this.cloudParticles.forEach((cloud) => {
-      // Tornar o movimento mais lento
-      cloud.rotation.z += 0.001; // Reduzido para 0.001 para movimento mais lento
-  
-      // Controle da opacidade com suavidade
-      const material = cloud.material;
-      if (material instanceof THREE.MeshLambertMaterial) {
-        const newOpacity = material.opacity + (Math.random() - 0.5) * 0.005; // Mais lento e controlado
-        material.opacity = Math.min(1, Math.max(0.2, newOpacity)); // Mantém limite de opacidade entre 0.2 e 1
-      }
-    });
+
+  private animateClouds(dt: number): void {
+    for (const cloud of this.cloudParticles) {
+      cloud.rotation.z += CLOUD_SPIN * dt;
+
+      const newOpacity = cloud.material.opacity + (Math.random() - 0.5) * 0.6 * dt;
+      cloud.material.opacity = Math.min(1, Math.max(0.2, newOpacity));
+    }
   }
 
-  private animate(): void {
-    this.frameId = requestAnimationFrame(() => this.animate());
+  private animate(now: number): void {
+    this.frameId = requestAnimationFrame(time => this.animate(time));
 
-    this.animateClouds();
-    this.animateRain();
+    if (this.paused) return;
 
-    if (Math.random() > 0.90 || this.flash.power > 100) {
+    // Tudo se move por segundo, nao por quadro: taxa irregular nao vira tranco.
+    const dt = this.lastTime ? Math.min((now - this.lastTime) / 1000, 0.05) : 1 / 60;
+    this.lastTime = now;
+
+    this.animateClouds(dt);
+    this.animateRain(dt);
+
+    if (Math.random() < FLASH_RATE * dt || this.flash.power > 100) {
       if (this.flash.power < 100) {
         this.flash.position.set(
           Math.random() * 400,
