@@ -1,6 +1,11 @@
 <article class="card" [style.animation-delay.ms]="index * 60">
   <div class="media">
-    <img [src]="product.imageCard" [alt]="product.nome" width="460" height="613" loading="lazy" decoding="async">
+    <img
+      [src]="product.imageCard"
+      [srcset]="product.imageCardSm + ' 320w, ' + product.imageCard + ' 460w'"
+      sizes="(max-width: 760px) 46vw, (max-width: 1280px) 24vw, 300px"
+      [alt]="product.nome"
+      width="460" height="613" loading="lazy" decoding="async">
     <div class="shine"></div>
 
     <div class="tags">

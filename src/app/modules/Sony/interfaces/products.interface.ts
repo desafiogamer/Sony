@@ -9,6 +9,8 @@ export interface productInterface {
   image: string;
   /** Capa 460x613 usada nos cards; `image` fica para usos em tamanho cheio. */
   imageCard: string;
+  /** Mesma capa a 320x427, servida por srcset em telas menores. */
+  imageCardSm: string;
   quantity: number;
   rating: number;
   platform: string;

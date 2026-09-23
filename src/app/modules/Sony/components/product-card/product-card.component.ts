@@ -32,7 +32,7 @@ export class ProductCardComponent {
 
   public adicionar(): void {
     this.cart.add(this.product);
-    this.toast.show('Adicionado ao carrinho', this.product.nome, this.product.imageCard);
+    this.toast.show('Adicionado ao carrinho', this.product.nome, this.product.imageCardSm);
 
     this.added.set(true);
     setTimeout(() => this.added.set(false), 1400);

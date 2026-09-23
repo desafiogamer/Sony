@@ -7,6 +7,19 @@ const CLOUD_SPIN = 0.06;
 /** Raios por segundo, em media. */
 const FLASH_RATE = 6;
 
+/**
+ * O fundo e decorativo: 30fps bastam. Como todo movimento e calculado por
+ * tempo decorrido, limitar a taxa nao produz solavanco.
+ */
+const FRAME_MS = 1000 / 30 - 2;
+
+/**
+ * Fracao da resolucao da tela em que a cena e desenhada. O canvas e esticado
+ * por CSS ate o tamanho cheio; com chuva e nevoa a diferenca nao aparece, e o
+ * custo de preenchimento cai pelo quadrado do fator.
+ */
+const RENDER_SCALE = 0.65;
+
 @Component({
   selector: 'app-modelo-3-d',
   standalone: true,
@@ -28,6 +41,7 @@ export class Modelo3DComponent implements AfterViewInit, OnDestroy {
   private readonly zone = inject(NgZone);
   private frameId = 0;
   private lastTime = 0;
+  private lastDraw = 0;
   private paused = false;
   private rainCount = 0;
 
@@ -35,7 +49,37 @@ export class Modelo3DComponent implements AfterViewInit, OnDestroy {
     // Sem animação de fundo para quem pediu menos movimento.
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
+    // Sem GPU, cada quadro e rasterizado na CPU e trava a pagina inteira.
+    if (!Modelo3DComponent.temGpu()) return;
+
     this.init();
+  }
+
+  /**
+   * Detecta rasterizacao por software (SwiftShader, llvmpipe, Mesa generico),
+   * comum em maquinas virtuais, navegadores headless e drivers desatualizados.
+   */
+  private static temGpu(): boolean {
+    try {
+      const canvas = document.createElement('canvas');
+      const gl = canvas.getContext('webgl') as WebGLRenderingContext | null;
+      if (!gl) return false;
+
+      const info = gl.getExtension('WEBGL_debug_renderer_info');
+      const nome = info
+        ? String(gl.getParameter(info.UNMASKED_RENDERER_WEBGL) ?? '').toLowerCase()
+        : '';
+
+      // Libera o contexto de teste: o navegador so permite alguns por pagina.
+      gl.getExtension('WEBGL_lose_context')?.loseContext();
+
+      // Sem a extensao (navegadores que a bloqueiam) assume-se que ha GPU.
+      if (!nome) return true;
+
+      return !/swiftshader|llvmpipe|software|basic render|microsoft basic/.test(nome);
+    } catch {
+      return false;
+    }
   }
 
   ngOnDestroy(): void {
@@ -55,8 +99,17 @@ export class Modelo3DComponent implements AfterViewInit, OnDestroy {
   private onResize = (): void => {
     this.camera.aspect = window.innerWidth / window.innerHeight;
     this.camera.updateProjectionMatrix();
-    this.renderer.setSize(window.innerWidth, window.innerHeight);
+    this.applySize();
   };
+
+  /** Desenha abaixo da resolucao da tela; o CSS estica o canvas de volta. */
+  private applySize(): void {
+    this.renderer.setSize(
+      Math.round(window.innerWidth * RENDER_SCALE),
+      Math.round(window.innerHeight * RENDER_SCALE),
+      false
+    );
+  }
 
   /** Aba escondida não precisa desenhar nada. */
   private onVisibility = (): void => {
@@ -86,9 +139,9 @@ export class Modelo3DComponent implements AfterViewInit, OnDestroy {
     this.scene.add(this.flash);
 
     this.renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: 'low-power' });
-    this.renderer.setSize(window.innerWidth, window.innerHeight);
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+    this.renderer.setPixelRatio(1);
     this.renderer.setClearColor(0x07070f);
+    this.applySize();
     this.renderer.domElement.id = 'bg-canvas';
     document.body.appendChild(this.renderer.domElement);
 
@@ -164,7 +217,7 @@ export class Modelo3DComponent implements AfterViewInit, OnDestroy {
       // Planos grandes e translúcidos custam preenchimento: poucos bastam.
       const cloudGeo = new THREE.PlaneGeometry(400, 400);
 
-      for (let p = 0; p < 14; p++) {
+      for (let p = 0; p < 8; p++) {
         // Material por nuvem, senão a opacidade de uma sobrescreve a das outras.
         const cloudMaterial = new THREE.MeshLambertMaterial({
           map: texture,
@@ -200,6 +253,8 @@ export class Modelo3DComponent implements AfterViewInit, OnDestroy {
     this.frameId = requestAnimationFrame(time => this.animate(time));
 
     if (this.paused) return;
+    if (now - this.lastDraw < FRAME_MS) return;
+    this.lastDraw = now;
 
     // Tudo se move por segundo, nao por quadro: taxa irregular nao vira tranco.
     const dt = this.lastTime ? Math.min((now - this.lastTime) / 1000, 0.05) : 1 / 60;
